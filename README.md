@@ -4,9 +4,11 @@ Kentsel serinlik ve su tahsis motoru: sıcak hava dalgası gününde kısıtlı 
 
 Öğrenci karar destek prototipidir; etki eğrileri Antalya'da sahada doğrulanmamıştır (2027 pilotu).
 
-Canlı uygulama: https://cop31so-bjfwfgycfoqz7ltvuqiz5f.streamlit.app/
+Canlı uygulama: https://revize-nbbmv2gz99wbroa7qgcwni.streamlit.app/
 
 ## Çalıştırma
+
+Python 3.11 ya da üstü (test: 3.13).
 
 ```bash
 pip install -r requirements.txt
@@ -25,16 +27,17 @@ Testlerde ağ çağrıları taklit edilir; sentetik hava yalnızca test içindir
 
 | Dosya | İçerik |
 |---|---|
-| `coolscape_app.py` | Streamlit uygulaması (v6) |
+| `coolscape_app.py` | Streamlit uygulaması (v7): Özet, Harita ve plan, Ekonomi, Duyarlılık ve karşılaştırma, Yöntem ve sınırlar sekmeleri |
 | `isi_yuzeyi_h3.csv` | Landsat 9 yüzey sıcaklığı (25.07.2025) ve Sentinel-2 NDVI (24.07.2025, kısmi), H3 res 9 |
 | `nufus_h3.csv` | WorldPop 2025 toplam nüfus ve 65+ (ilçe oranıyla), H3 res 9 |
 | `tesisler_osm.json` | OpenStreetMap okul/kreş, sağlık, içme suyu (Overpass dışa aktarımı) |
 | `hava/openmeteo_*.json` | Kayıtlı günlerin ham Open-Meteo yanıtı; varsa API yerine okunur (429 sınırına karşı). Bkz. `hava/BENIOKU.md` |
-| `parklar_osm.json` | İsteğe bağlı: OpenStreetMap park poligonları; yoksa canlı Overpass |
+| `hava/openmeteo_yaz_2025.json` | İsteğe bağlı: 2025 yazı saatlik Open-Meteo verisi; sıcak gün sayısı ve yıllık hacim esası |
+| `parklar_osm.json` | İsteğe bağlı: OpenStreetMap park poligonları; yoksa 5 pilot park (canlı Overpass gelişmiş ayarlardan açılır) |
 | `nufus_hazirla.py` | WorldPop → `nufus_h3.csv` |
 | `ndvi_hazirla.py` | Sentinel-2 → `isi_yuzeyi_h3.csv` NDVI sütunu |
 | `uyanik_tut.py`, `.github/workflows/uyanik_tut.yml` | Uygulamayı 3 saatte bir uyandırır |
-| `CoolScape_ATIKSU_RAPORU.md` | Mevzuat, altyapı/finansman ve ekonomik etki analizi |
+| `Atiksu_Geri_Kazanim_Fizibilite_Raporu.md` | Mevzuat, altyapı/finansman ve ekonomik etki analizi |
 
 ## Veri kaynakları ve atıf
 

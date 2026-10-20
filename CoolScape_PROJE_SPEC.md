@@ -7,7 +7,8 @@ Bu dosya önceki spec sürümlerinin yerine geçer. Çakışmada bu dosya geçer
 | Ne | Adres |
 |---|---|
 | GitHub deposu | https://github.com/68wkf9wv55-netizen/cop31so |
-| Canlı uygulama | https://cop31so-bjfwfgycfoqz7ltvuqiz5f.streamlit.app/ |
+| Canlı uygulama (güncel, 20.10.2026) | https://revize-nbbmv2gz99wbroa7qgcwni.streamlit.app/ |
+| Canlı uygulama (önceki) | https://cop31so-bjfwfgycfoqz7ltvuqiz5f.streamlit.app/ |
 | Geçersiz eski uygulama linki | `hpwfojfuks6ctcccqjwgxz.streamlit.app` (kullanma) |
 | Streamlit ana dosya | `coolscape_app.py` |
 
@@ -59,12 +60,21 @@ Bu dosya önceki spec sürümlerinin yerine geçer. Çakışmada bu dosya geçer
 - Kısıtlar: bütçe, hat kapasitesi, min doz, nem kapısı (varsayılan 0,8 kPa, değişmedi), kırılgan pay, park kesme 18:00, günlük 6 mm.
 - Yerleşim maskesi ≥50 kişi/altıgen; kıyı karışık piksel maskesi; adaylar 4 sisleme + 3 ıslatma; parka (kenar) uzaklık 600–3.000 m.
 - Plana alınan parklar: 5 pilot + 800 m içindeki (nüfus × öncelik) toplamı en yüksek 10 OSM parkı (≥0,5 ha; ayarlanabilir 0–30).
+- **v7 (20.10.2026, onaylandı: "hepsini hemen yapalım"):**
+  - Kırılganlık eşiği gruba göre: parklar kendi medyanıyla, sisleme/ıslatma adayları kendi medyanıyla (önceden tüm noktaların medyanı; kırılganların hepsi adaydı).
+  - Park MRT'sinde yüzey farkı park İÇİ altıgen(ler)den (k_iç = round(yarıçap / altıgen aralığı)); boşsa (kıyı/su maskesi) çevre halkası. Karaalioğlu ve Atatürk Parkı'nda iç altıgen maskeli → çevre kullanılır.
+  - Termal atalet 0,5 (temsili): park ve ıslatmada doğrudan etkinin 0,5'i sonraki saate taşınır; MILP amacında segment ağırlığı = öncelik(t) + 0,5 × öncelik(t+1). Sislemede taşınma yok. Arayüzde 0–0,8.
+  - Sisleme istasyonu günde en çok 8 saat (temsili; arayüzde 2–13).
+  - Değerlendirme: tabanlar (gece = 0, eşit park, aynı yöntemlerle eşit işletim, en sıcak önce, CoolScape yalnız park, CoolScape, bütçe +%50); kazanç ayrışımı zamanlama (yalnız park / eşit park), çeşitlendirme (CoolScape / yalnız park), bütçe (+%50 / CoolScape); tek-seferde-bir duyarlılık (10 parametre, 20 MILP).
 - Temsili kalanlar: hat kapasitesi, sulanan alan/pay, pompa, kişi/saat erişim, gölge etkinliği ve NDVI eşlemesi, g(saat) sınırları, sisleme alanı, yayılım ölçekleri, yıllık sulama günü ve mm.
 
-## 6. Uygulama (v6)
+## 6. Uygulama (v7)
 
-- Bölümler: özet metrikler → erişim boşluğu (pilot + tüm OSM parkları) → harita (Uydu/CBS/3B) → müdahale noktaları → plan matrisi → operatör onay listesi → **Su kaynağı ve ekonomi** → **Nem kapısı kontrolü** → bütçe–serinlik eğrisi → Neden?
-- Ekonomi bölümü (v6.1, `CoolScape_ATIKSU_RAPORU.md` bölüm 3.2 ile aynı formüller): maliyet esası (ASAT tarifesi 33,31 vekil / ASAT üretim maliyeti 60 vekil, 24.07.2024 / kuyu: kWh/m³ 0,417 vekil × elektrik fiyatı / elle), S1/S2, alan, mm/gün, gün, arıtma tesisi debisi (Lara 150.000 m³/gün), iskonto ve süre (örnek %10, 10 yıl), arıtılmış su maliyeti, pay, yatırım, işletme. Çıktı: yıllık m³, talep/AAT payı, yıllık TL, sıcak gün TL, ikame m³, başa baş fiyat, azami yatırım (üst sınır ve girdiyle; basit ve NBD=0), net tasarruf, geri dönüş, NBD. Sisleme içme suyuyla kalır.
+- v7 düzeni: başlık → kaynak satırı → **erişim boşluğu (ana mesaj, gerçek veri)** → sekmeler: Özet (zamanlama / çeşitlendirme / bütçe +%50 / kişi·°C·saat temsili; kullanılan su, kırılgan su, toplam; senaryo karşılaştırma tablosu; 2025 yazı sıcak gün sayısı) · Harita ve plan (harita, müdahale noktaları, plan matrisi, operatör listesi) · Ekonomi · Duyarlılık ve karşılaştırma (tornado, bütçe eğrisi, nem kapısı) · Yöntem ve sınırlar (veri güvenilirliği tablosu, Landsat park içi/çevre LST, 2027 pilot tasarımı, Neden?).
+- Gelişmiş ayarlara eklenenler: termal atalet, sisleme günlük saat, "OSM parklarını canlı indir (Overpass)" (varsayılan kapalı; `parklar_osm.json` varsa o kullanılır; tekrarlanabilirlik için).
+- Yaz klimatolojisi: `hava/openmeteo_yaz_2025.json` (01.06–30.09.2025, gerçek ERA5) varsa her gün 08–20 en yüksek kent UTCI'si; ≥32/38/46 °C gün sayıları. Ekonomide "Yıllık hacim esası": temsili (mm × gün) ya da gerçek sıcak gün sayısı × bugünkü plan (yalnız soğutma suyu). Dosya yoksa BİLGİ YETERSİZ.
+- v6 bölümleri (içerik korunuyor): özet metrikler → erişim boşluğu (pilot + tüm OSM parkları) → harita (Uydu/CBS/3B) → müdahale noktaları → plan matrisi → operatör onay listesi → **Su kaynağı ve ekonomi** → **Nem kapısı kontrolü** → bütçe–serinlik eğrisi → Neden?
+- Ekonomi bölümü (v6.1, `Atiksu_Geri_Kazanim_Fizibilite_Raporu.md` bölüm 3.2 ile aynı formüller): maliyet esası (ASAT tarifesi 33,31 vekil / ASAT üretim maliyeti 60 vekil, 24.07.2024 / kuyu: kWh/m³ 0,417 vekil × elektrik fiyatı / elle), S1/S2, alan, mm/gün, gün, arıtma tesisi debisi (Lara 150.000 m³/gün), iskonto ve süre (örnek %10, 10 yıl), arıtılmış su maliyeti, pay, yatırım, işletme. Çıktı: yıllık m³, talep/AAT payı, yıllık TL, sıcak gün TL, ikame m³, başa baş fiyat, azami yatırım (üst sınır ve girdiyle; basit ve NBD=0), net tasarruf, geri dönüş, NBD. Sisleme içme suyuyla kalır. v6.2 (20.10.2026): arıtılmış su maliyeti ve yatırım literatür vekiliyle hesaplanır (varsayılan): c_r = (0,14 arıtma işletmesi + 0,05 pompaj) €/m³ × 55,61 TL/€ = 10,57 TL/m³ (Exposito vd. 2024; Pistocchi vd. 2017); yatırım = 0,60 €/(m³/yıl) + 5 €/m³ depo (1 günlük talep), boru hariç. Alternatif: İSKİ 2026 "Geri Dönüşüm Suyu" 7,81 TL/m³. Yeni satır: boru hattı için kalan pay = I_max(NBD=0) − yatırım. Pilot varsayılanında: net tasarruf 1.473.818 TL/yıl, geri dönüş 1,5 yıl (boru hariç), boru için kalan pay 6.793.757 TL (hepsi vekil/temsili girdilerden).
 - Nem kapısı bölümü: saatlik VPD, etki çarpanı, kapalı saatler; 0–1,6 kPa eşik duyarlılığı (düğmeyle).
 - Tematik (matplotlib) harita kaldırıldı (erişilemeyen koddu).
 - Hava (v6.1): kayıtlı günlerde önce `hava/openmeteo_YYYY-AA-GG.json` (ham Open-Meteo yanıtı, gerçek) okunur; yoksa API (429/5xx'te 3 deneme, disk önbelleği). Hata durumunda arşiv bağlantısı gösterilir ve JSON/CSV yüklenebilir. Neden: 20.10.2026'da Streamlit Cloud'da Open-Meteo 429 Too Many Requests.
@@ -76,31 +86,33 @@ requirements.txt
 isi_yuzeyi_h3.csv
 tesisler_osm.json
 nufus_h3.csv
-parklar_osm.json            (isteğe bağlı; yoksa canlı Overpass)
+parklar_osm.json            (isteğe bağlı; yoksa 5 pilot park, canlı Overpass seçeneği)
+hava/openmeteo_*.json, hava/openmeteo_yaz_2025.json (gerçek Open-Meteo; kullanıcı indirir)
 ndvi_hazirla.py             (yerelde; rasterio, pyproj)
 nufus_hazirla.py
 tests/test_app.py, tests/parklar_test.json (sentetik fikstür)
-CoolScape_ATIKSU_RAPORU.md   (CoolScape_MEVZUAT_EKONOMI.md'nin yerine)
+Atiksu_Geri_Kazanim_Fizibilite_Raporu.md   (CoolScape_MEVZUAT_EKONOMI.md'nin yerine)
 haritalar/harita_1-3.png, .pdf   (v5 modeliyle üretildi)
 uyanik_tut.py, .github/workflows/uyanik_tut.yml
 README.md
 ```
 
-**requirements.txt** (değişmedi)
+**requirements.txt** (v7: test edilen sürümler üst sınır)
 ```text
-streamlit>=1.40
-altair
-pandas
-numpy
-pydeck
-requests
-h3>=4
-pythermalcomfort>=2.10
-metpy
+# Üst sınırlar test edilen sürümlerdir (Python 3.13, 20.10.2026); test edilmemiş yeni sürüm kurulmaz.
+streamlit>=1.40,<=1.66.0
+altair>=5,<=6.3.0
+pandas>=2.2,<=3.0.5
+numpy>=1.26,<=2.5.3
+pydeck>=0.9,<=0.9.3
+requests>=2.31,<=2.34.2
+h3>=4,<=4.5.0
+pythermalcomfort>=2.10,<=4.6.2
+metpy>=1.6,<=1.7.1
 pulp==2.9.0
-matplotlib>=3.7
-folium>=0.17
-branca>=0.7
+matplotlib>=3.7,<=3.11.2
+folium>=0.17,<=0.20.0
+branca>=0.7,<=0.8.2
 ```
 
 ## 7. Sonuçlar
@@ -115,11 +127,13 @@ branca>=0.7
 
 ## 8. Açık durum
 
+- v7 (20.10.2026): 21 test geçti (AppTest dahil); görsel kontrol sentetik TEST havasıyla yapıldı (sandbox Open-Meteo, Overpass, harita karoları ve Streamlit sitesine erişemez; uydu haritası karoları sandboxta yüklenmez). Yayın sonrası canlı rakamlar gerçek Open-Meteo ile yeniden alınmalı.
+- Kullanıcıya bağlı: `hava/openmeteo_yaz_2025.json` (bağlantı hava/BENIOKU.md), NDVI karoları, `parklar_osm.json`, belediye verisi (sulama takvimi, kaynak, arazöz maliyeti), canlı rakamlar.
 - v6 dosyaları repoya yüklenecek; ardından Reboot app ve canlı rakamlar (iki gün) yeniden alınacak.
 - `ndvi_hazirla.py` Sentinel-2 karolarıyla yerelde çalıştırılıp güncel `isi_yuzeyi_h3.csv` repoya yüklenecek.
 - İsteğe bağlı: `parklar_osm.json` overpass-turbo'dan dışa aktarılıp repoya konursa park seti sabitlenir (yeniden üretilebilirlik).
 - CBS haritaları (QGIS) v5 modeliyle; v6 ile yeniden üretilmeli.
-- ASAT/belediyeye sorulacaklar: CoolScape_ATIKSU_RAPORU.md bölüm 4.
+- ASAT/belediyeye sorulacaklar: Atiksu_Geri_Kazanim_Fizibilite_Raporu.md bölüm 4.
 - 20.10.2026: repo dosyaları yerelde silindi; tüm paket yeniden üretildi. `uyanik_tut.py`, `.github/workflows/uyanik_tut.yml`, `README.md` yeniden yazıldı (özgünleri yoktu). `haritalar/` (QGIS PNG/PDF) ve `cbs_*.py`, `qgis_harita.py` paket dışında: BİLGİ YETERSİZ; haritalar klasörü yoksa uygulama CBS seçeneğini gizler.
 
 ## 9. Sonraki adımlar
@@ -130,7 +144,10 @@ branca>=0.7
 | 2 | NDVI'nin tüm alan için üretimi |
 | 3 | ASAT'tan park sulama kaynağı, tarife cetveli ve taban tüketim |
 | 4 | Ek-7 7.1 sayısal sınırlarının asıl metinden okunması |
+| 4b | v6.3 (20.10.2026) yapıldı: başlık kartı 'Zamanlama ve yer seçimi kazancı (yalnız park)', yöntem çeşitlendirme dahil kazanç alt satırda; kırılgan sayılan noktaların bileşimi gösteriliyor; aday noktalara en yakın adlı OSM tesisi (konum); arazöz sefer sayısı (18 m³ tanker, vekil) ve sefer maliyeti girdisi; arıtılmış su mevcut kaynaktan pahalıysa uyarı; harita kesirli zoom. |
+| 4c | v7'de yapıldı (a, b, c). (d) yapılmadı: ikinci Open-Meteo noktası ERA5 0,25° ızgarasında aynı/komşu hücreye düşer, kıyı–iç farkı göstermez; MGM istasyonu gerekir. Önceki öneri metni: (a) kırılganlık eşiği parklar ve adaylar için ayrı hesaplanmalı; şu an kırılgan sayılan noktaların hepsi aday (4 sisleme + 2 ıslatma), hiçbir park kırılgan değil, %40 kırılgan pay kuralı suyu adaylara itiyor; (b) sulamanın 1–2 saatlik termal ataleti; (c) sisleme için saatlik kullanım/kişi varlığı kısıtı (şu an her saat açık); (d) kıyı için ikinci Open-Meteo noktası. |
+| 5 | Web portalı (seçenek B, karar 20.10.2026): Task 3 sonrası, 22 Ekim'den itibaren; COP31 sergisine (9 Kasım) hazır. Koyu tam ekran harita, 08–20 saat çizelgesi, imleçle değer okuma, yan paneller (kontroller/tanı), tanıtım turu. Python modeli senaryoları gerçek Open-Meteo verisiyle önceden hesaplar (2 gün × bütçe × öncelik ön ayarı); canlı MILP Streamlit'te kalır. Görsel düzen örnek alınır; başka markanın logo/renk/adı kullanılmaz. Ön koşul: hava/openmeteo_*.json |
 
 ## 10. Açık sınırlar
 
-Etki eğrisi Antalya'da sahada doğrulanmadı (2027 pilotu); sisleme 4,4 °C kuru Arizona ölçümü; hava tek noktadan, kıyı nemi ayrışmıyor; g(saat) ışınıma bağlı basit ölçek, yüzey enerji dengesi değil; gölge yalnızca NDVI olan yerde ve bina gölgesi yok; yayılım ölçekleri varsayım; +% kazanç kendi tabanımıza göre ve kırılgan; pilot parklarla arıtma tesisi arasındaki bağlantı BİLGİ YETERSİZ.
+Termal atalet (0,5) ve sisleme saat sınırı (8) temsili; modül bölme (tek dosya → paket) ve portal Task 3 sonrasına ertelendi. Etki eğrisi Antalya'da sahada doğrulanmadı (2027 pilotu); sisleme 4,4 °C kuru Arizona ölçümü; hava tek noktadan, kıyı nemi ayrışmıyor; g(saat) ışınıma bağlı basit ölçek, yüzey enerji dengesi değil; gölge yalnızca NDVI olan yerde ve bina gölgesi yok; yayılım ölçekleri varsayım; +% kazanç kendi tabanımıza göre ve kırılgan; pilot parklarla arıtma tesisi arasındaki bağlantı BİLGİ YETERSİZ.

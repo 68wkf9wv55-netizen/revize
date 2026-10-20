@@ -1,13 +1,14 @@
-streamlit>=1.40
-altair
-pandas
-numpy
-pydeck
-requests
-h3>=4
-pythermalcomfort>=2.10
-metpy
+# Üst sınırlar test edilen sürümlerdir (Python 3.13, 20.10.2026); test edilmemiş yeni sürüm kurulmaz.
+streamlit>=1.40,<=1.66.0
+altair>=5,<=6.3.0
+pandas>=2.2,<=3.0.5
+numpy>=1.26,<=2.5.3
+pydeck>=0.9,<=0.9.3
+requests>=2.31,<=2.34.2
+h3>=4,<=4.5.0
+pythermalcomfort>=2.10,<=4.6.2
+metpy>=1.6,<=1.7.1
 pulp==2.9.0
-matplotlib>=3.7
-folium>=0.17
-branca>=0.7
+matplotlib>=3.7,<=3.11.2
+folium>=0.17,<=0.20.0
+branca>=0.7,<=0.8.2
