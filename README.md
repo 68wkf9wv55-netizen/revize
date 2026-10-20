@@ -29,6 +29,7 @@ Testlerde ağ çağrıları taklit edilir; sentetik hava yalnızca test içindir
 | `isi_yuzeyi_h3.csv` | Landsat 9 yüzey sıcaklığı (25.07.2025) ve Sentinel-2 NDVI (24.07.2025, kısmi), H3 res 9 |
 | `nufus_h3.csv` | WorldPop 2025 toplam nüfus ve 65+ (ilçe oranıyla), H3 res 9 |
 | `tesisler_osm.json` | OpenStreetMap okul/kreş, sağlık, içme suyu (Overpass dışa aktarımı) |
+| `hava/openmeteo_*.json` | Kayıtlı günlerin ham Open-Meteo yanıtı; varsa API yerine okunur (429 sınırına karşı). Bkz. `hava/BENIOKU.md` |
 | `parklar_osm.json` | İsteğe bağlı: OpenStreetMap park poligonları; yoksa canlı Overpass |
 | `nufus_hazirla.py` | WorldPop → `nufus_h3.csv` |
 | `ndvi_hazirla.py` | Sentinel-2 → `isi_yuzeyi_h3.csv` NDVI sütunu |

@@ -67,6 +67,7 @@ Bu dosya önceki spec sürümlerinin yerine geçer. Çakışmada bu dosya geçer
 - Ekonomi bölümü (v6.1, `CoolScape_ATIKSU_RAPORU.md` bölüm 3.2 ile aynı formüller): maliyet esası (ASAT tarifesi 33,31 vekil / ASAT üretim maliyeti 60 vekil, 24.07.2024 / kuyu: kWh/m³ 0,417 vekil × elektrik fiyatı / elle), S1/S2, alan, mm/gün, gün, arıtma tesisi debisi (Lara 150.000 m³/gün), iskonto ve süre (örnek %10, 10 yıl), arıtılmış su maliyeti, pay, yatırım, işletme. Çıktı: yıllık m³, talep/AAT payı, yıllık TL, sıcak gün TL, ikame m³, başa baş fiyat, azami yatırım (üst sınır ve girdiyle; basit ve NBD=0), net tasarruf, geri dönüş, NBD. Sisleme içme suyuyla kalır.
 - Nem kapısı bölümü: saatlik VPD, etki çarpanı, kapalı saatler; 0–1,6 kPa eşik duyarlılığı (düğmeyle).
 - Tematik (matplotlib) harita kaldırıldı (erişilemeyen koddu).
+- Hava (v6.1): kayıtlı günlerde önce `hava/openmeteo_YYYY-AA-GG.json` (ham Open-Meteo yanıtı, gerçek) okunur; yoksa API (429/5xx'te 3 deneme, disk önbelleği). Hata durumunda arşiv bağlantısı gösterilir ve JSON/CSV yüklenebilir. Neden: 20.10.2026'da Streamlit Cloud'da Open-Meteo 429 Too Many Requests.
 
 **Repo ana dizini**
 ```text

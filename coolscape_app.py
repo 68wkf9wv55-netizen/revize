@@ -201,17 +201,61 @@ def _hava_tablosu(h):
     return df
 
 
-def _hava_istek(url, tarih):
-    params = {"latitude": ANTALYA_LAT, "longitude": ANTALYA_LON, "start_date": tarih, "end_date": tarih,
-              "hourly": HAVA_DEGISKENLERI, "wind_speed_unit": "ms", "timezone": "Europe/Istanbul"}
-    r = requests.get(url, params=params, timeout=20)
-    r.raise_for_status()
-    return _hava_tablosu(r.json()["hourly"])
+ARSIV_URL = "https://archive-api.open-meteo.com/v1/archive"
+HAVA_KLASOR = "hava"   # repodaki gerçek Open-Meteo kayıtları: hava/openmeteo_YYYY-AA-GG.json (ham API yanıtı)
+
+
+def hava_parametreleri(tarih):
+    return {"latitude": ANTALYA_LAT, "longitude": ANTALYA_LON, "start_date": tarih, "end_date": tarih,
+            "hourly": HAVA_DEGISKENLERI, "wind_speed_unit": "ms", "timezone": "Europe/Istanbul"}
+
+
+def arsiv_linki(tarih):
+    return requests.Request("GET", ARSIV_URL, params=hava_parametreleri(tarih)).prepare().url
+
+
+def _hava_istek(url, tarih, deneme=3, bekleme_s=2.0):
+    """429 (istek sınırı) ve 5xx hatalarında artan beklemeyle yeniden dener."""
+    import time
+    son = None
+    for i in range(deneme):
+        try:
+            r = requests.get(url, params=hava_parametreleri(tarih), timeout=20)
+            if r.status_code == 429 or r.status_code >= 500:
+                son = requests.HTTPError(f"{r.status_code} {r.reason}")
+                time.sleep(bekleme_s * (2 ** i))
+                continue
+            r.raise_for_status()
+            return _hava_tablosu(r.json()["hourly"])
+        except requests.ConnectionError as hata:
+            son = hata
+            time.sleep(bekleme_s * (2 ** i))
+    raise son
+
+
+def json_hava_verisi(veri) -> pd.DataFrame:
+    """Ham Open-Meteo JSON yanıtı (tarayıcıdan kaydedilmiş) → saatlik tablo."""
+    if isinstance(veri, (str, bytes)):
+        veri = json.loads(veri)
+    if "hourly" not in veri:
+        raise ValueError("Open-Meteo JSON'unda 'hourly' alanı yok.")
+    return _hava_tablosu(veri["hourly"])
 
 
 @st.cache_data(show_spinner=False)
+def kayitli_hava_oku(tarih: str, degistirilme: float):
+    yol = os.path.join(HAVA_KLASOR, f"openmeteo_{tarih}.json")
+    if not os.path.exists(yol):
+        return None
+    with open(yol, encoding="utf-8") as f:
+        df = json_hava_verisi(json.load(f))
+    df = df[df["zaman"].dt.date.astype(str) == tarih]
+    return df if len(df) else None
+
+
+@st.cache_data(show_spinner=False, persist="disk")
 def hava_verisi_cek(tarih: str) -> pd.DataFrame:
-    return _hava_istek("https://archive-api.open-meteo.com/v1/archive", tarih)
+    return _hava_istek(ARSIV_URL, tarih)
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
@@ -1629,17 +1673,31 @@ def ana():
     tur, tarih = GUNLER[gun]
     if tur == "tahmin":
         tarih = (datetime.now(ZoneInfo("Europe/Istanbul")).date() + timedelta(days=1)).isoformat()
+    kayit_yolu = os.path.join(HAVA_KLASOR, f"openmeteo_{tarih}.json")
+    kayitli = None if tur == "tahmin" else kayitli_hava_oku(
+        tarih, os.path.getmtime(kayit_yolu) if os.path.exists(kayit_yolu) else 0)
     try:
-        hava = hava_tahmini_cek(tarih) if tur == "tahmin" else hava_verisi_cek(tarih)
-        hava_kaynak = f"Open-Meteo tahmini ({tarih})" if tur == "tahmin" else "Open-Meteo arşivi (ERA5 tabanlı)"
+        if kayitli is not None:
+            hava = kayitli
+            hava_kaynak = f"Open-Meteo arşivi (ERA5 tabanlı), repodaki kayıt {kayit_yolu}"
+        else:
+            hava = hava_tahmini_cek(tarih) if tur == "tahmin" else hava_verisi_cek(tarih)
+            hava_kaynak = f"Open-Meteo tahmini ({tarih})" if tur == "tahmin" else "Open-Meteo arşivi (ERA5 tabanlı)"
     except Exception as hata:
-        st.error(f"Open-Meteo'ya erişilemedi ({hata}). Uydurma veriyle devam edilmez. Saatlik veriyi CSV olarak "
-                 "yükleyebilirsiniz (sütunlar: saat, sicaklik_c, bagil_nem, ruzgar_ms, gunes_wm2).")
-        yuklenen = st.file_uploader("Saatlik hava verisi (CSV)", type="csv")
+        st.error(f"Open-Meteo'ya erişilemedi ({hata}). Uydurma veriyle devam edilmez. Aşağıdaki bağlantıyı tarayıcıda "
+                 "açıp sayfayı .json olarak kaydedin ve yükleyin (ya da CSV: saat, sicaklik_c, bagil_nem, ruzgar_ms, "
+                 "gunes_wm2).")
+        if tur != "tahmin":
+            st.code(arsiv_linki(tarih), language=None)
+        yuklenen = st.file_uploader("Saatlik hava verisi (Open-Meteo JSON ya da CSV)", type=["json", "csv"])
         if yuklenen is None:
             st.stop()
-        hava = csv_hava_verisi(yuklenen)
-        hava_kaynak = "yüklenen CSV"
+        if yuklenen.name.lower().endswith(".json"):
+            hava = json_hava_verisi(yuklenen.getvalue())
+            hava_kaynak = "Open-Meteo (yüklenen JSON)"
+        else:
+            hava = csv_hava_verisi(yuklenen)
+            hava_kaynak = "yüklenen CSV"
     if not set(SAATLER) <= set(hava["saat"]):
         st.error("Hava verisinde 08:00–20:00 saatlerinin bir kısmı eksik.")
         st.stop()
